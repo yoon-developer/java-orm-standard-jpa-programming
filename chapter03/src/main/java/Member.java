@@ -1,22 +1,22 @@
-package jpa;
-
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-//@Table(name = "USER") // Table명 변경
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 public class Member {
 
   @Id
+  @GeneratedValue()
+  @Column(name = "MEMBER_ID")
   private Long id;
   private String name;
+  private String city;
+  private String street;
+  private String zipcode;
+
 }
