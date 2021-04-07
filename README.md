@@ -213,7 +213,7 @@ public class Member {
 | insertable & updatable | 등록 변경 가능 여부                                                                                                                                                | TRUE                  | 
 | nullable(DDL)          | null 값의 허용 여부를 설정한다. false로 설정하면 DDL 생성 시에 not null 제약조건이 붙는다.                                                                                             |                       | 
 | unique(DDL)            |  @Table의 uniqueConstraints와 같지만 한 컬럼에 간단히 유니크 제약조건을 걸 때 사용한다.                                                                                              |                       | 
-| columnDefinition(DDL)  | 데이터베이스 컬럼 정보를 직접 줄 수 있다. ex) varchar(100) default ‘EMPTY'                                                                                                  |                       | 
+| columnDefinition(DDL)  | 데이터베이스 컬럼 정보를 직접 줄 수 있다. ex) varchar(100) default 'EMPTY'                                                                                                  |                       | 
 | length(DDL)            | 문자 길이 제약조건. String 타입에만 사용한다.                                                                                                                              | 255                   | 
 | precision scale(DDL)   | BigDecimal 타입에서 사용한다. (BigInteger도 사용할 수 있다). precision은 소수점을 포함한 전체 자 릿수를 scale은 소수의 자릿수다. 참고로 double float 타입에는 적용되지 않는다. 아주 큰 숫자나 정밀한 소수를 다루어야 할 때만 사용한다. |  precision=19 scale=2 | 
 
@@ -276,6 +276,7 @@ public class Member {
 | initialValue     | DDL 생성 시에만 사용됨. 시퀀스 DDL을 생성할 때 처음 1 시작하는 수를 지정한다.                                     | 1                  | 
 | allocationSize   | 시퀀스 한 번 호출에 증가하는 수(성능 최적화에 사용됨 데이터베이스 시퀀스 값이 하나씩 증가하도록 설정되어 있으면 이 값 을 반드시 1로 설정해야 한다. | 50                 | 
 | catalog, schema |  데이터베이스 catalog, schema 이름                                                           |                    | 
+                                                       |                                    |   | 
 
 ```java
 @Entity 
@@ -335,3 +336,154 @@ public class Member {
 - 테이블의 외래키를 객체에 그대로 가져옴
 - 객체 그래프 탐색이 불가능
 - 참조가 없으므로 UML도 잘못됨
+
+# 4. 연관관계 매핑
+## 4.1. 연관관계 매핑시 고려사항
+
+- 방향(Direction): 단방향, 양방향
+- 다중성(Multiplicity): 다대일(N:1), 일대다(1:N), 일대일(1:1), 다대다(N:M)
+- 연관관계의 주인(Owner): 객체 양방향 연관관계는 관리 주인이 필요
+
+## 4.2. 단방향 연관관계
+
+> 객체의 참조와 테이블의 외래 키를 매핑
+
+@Column(name = "TEAM_ID")
+```java
+@Entity
+@Getter
+@Setter
+public class Member {
+
+  @Id
+  @GeneratedValue()
+  @Column(name = "MEMBER_ID")
+  private Long id;
+
+  @Column(name = "USERNAME")
+  private String name;
+  private int age;
+
+  @ManyToOne
+  @Column(name = "TEAM_ID")
+  private Team team;
+}
+```
+
+> 연관관계 저장
+```java
+Team team = new Team();
+team.setName("TeamA");
+em.persist(team);
+
+Member member = new Member();
+member.setName("member1");
+member.setTeam(team);
+em.persist(member);
+```
+
+> 참조로 연관관계 조회 - 객체 그래프 탐색
+```java
+Member findMember = em.find(Member.class, member.getId());
+Team findTeam = findMember.getTeam();
+```
+
+> 연관관계 수정
+```java
+Team teamB = new Team();
+teamB.setName("TeamB");
+em.persist(teamB);
+
+member.setTeam(teamB);
+```
+
+## 4.3. 양방향 매핑
+
+> Team 엔티티는 컬렉션 추가
+
+List<Member> members = new ArrayList<Member>();
+```java
+@Entity
+@Getter
+@Setter
+public class Team {
+
+  @Id
+  @GeneratedValue
+  @Column(name = "TEAM_ID")
+  private Long id;
+  private String name;
+
+  @OneToMany(mappedBy = "team")
+  List<Member> members = new ArrayList<Member>();
+}
+```
+
+> 반대 방향으로 객체 그래프 탐색
+```java
+Team findTeam = em.find(Team.class, team.getId());
+int memberSize = findTeam.getMembers()
+```
+
+> 객체와 테이블이 관계를 맺는 차이
+- 객체 연관관계 = 2개
+  - 회원 -> 팀 연관관계 1개(단방향)
+  - 팀 -> 회원 연관관계 1개(단방향)
+- 테이블 연관관계 = 1개
+  - 회원 <-> 팀의 연관관계 1개(양방향)
+
+> 객체의 양방향 관계
+- 객체의 양방향 관계는 사실 양방향 관계가 아니라 서로 다른 단뱡향 관계 2개
+  - A -> B (a.getB())
+  - B -> A (b.getA())
+  
+> 테이블의 양방향 연관관계
+- 테이블은 외래 키 하나로 두 테이블의 연관관계를 관리
+- MEMBER.TEAM_ID 외래 키 하나로 양방향 연관관계 가짐
+
+> 연관관계의 주인(Owner)
+
+양방향 매핑 규칙
+- 객체의 두 관계중 하나를 연관관계의 주인으로 지정
+- 연관관계의 주인만이 외래 키를 관리(등록, 수정)
+- 주인이 아닌쪽은 읽기만 가능
+- 주인은 mappedBy 속성 사용X 
+- 주인이 아니면 mappedBy 속성으로 주인 지정
+- 외래 키가 있는 있는 곳을 주인으로 설정 (반대로 가능)
+  - 1:N (N 객체를 연관관계 주인으로 설정)
+
+### 4.3.1. 양방향 매핑시 고려사항
+
+> 연관관계의 주인에 값을 입력하지 않음
+
+```java
+Member newMember = new Member();
+newMember.setName("member2");
+em.persist(newMember);
+
+
+Team newTeam = new Team();
+newTeam.setName("TeamB");
+newTeam.getMembers().add(newMember);
+em.persist(newTeam);
+```
+
+|MEMBER_ID   |AGE|USERNAME|TEAM_ID|
+|------------|---|--------|-------|
+|1           |0  |member2 |null   |
+
+|TEAM_ID     |NAME|
+|------------|----|
+|1           |TeamB|
+
+> 양방향 연관관계 주의
+- 순수 객체 상태를 고려해서 항상 양쪽에 값을 설정하
+- 연관관계 편의 메소드를 생성
+```java
+public void changeTeam(Team team) {
+  this.team = team;
+  team.getMembers().add(this);
+}
+``` 
+- 양방향 매핑시에 무한 루프 고려
+  - toString(), lombok, JSON 생성 라이브러리
