@@ -1,3 +1,5 @@
+package domain;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -8,19 +10,14 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class OrderItem {
+public class Item {
 
   @Id
   @GeneratedValue()
-  @Column(name = "ORDER_ITEM_ID")
+  @Column(name = "ITEM_ID")
   private Long id;
 
-  @Column(name = "ORDER_ID")
-  private Long orderId;
-
-  @Column(name = "ITEM_ID")
-  private Long itemId;
-
-  private int orderPrice;
-  private int count;
+  private String name;
+  private int price;
+  private int stockQuantity;
 }

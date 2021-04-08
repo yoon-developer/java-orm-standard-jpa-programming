@@ -1,3 +1,4 @@
+import domain.Member;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
@@ -20,8 +21,8 @@ public class Orm01Main {
       em.persist(member);
 
       // SELECT
-//      Member findMember = em.find(Member.class, 1L);
-//      Member findMember = em.createQuery("select m from Member m", Member.class).getSingleResult();
+//      domain.Member findMember = em.find(domain.Member.class, 1L);
+//      domain.Member findMember = em.createQuery("select m from domain.Member m", domain.Member.class).getSingleResult();
 //      System.out.println("findMember.getName() = " + findMember.getName());
 
       // UPDATE

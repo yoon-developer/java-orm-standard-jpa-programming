@@ -1,3 +1,5 @@
+package domain;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -8,15 +10,19 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class Member {
+public class OrderItem {
 
   @Id
   @GeneratedValue()
-  @Column(name = "MEMBER_ID")
+  @Column(name = "ORDER_ITEM_ID")
   private Long id;
-  private String name;
-  private String city;
-  private String street;
-  private String zipcode;
 
+  @Column(name = "ORDER_ID")
+  private Long orderId;
+
+  @Column(name = "ITEM_ID")
+  private Long itemId;
+
+  private int orderPrice;
+  private int count;
 }
